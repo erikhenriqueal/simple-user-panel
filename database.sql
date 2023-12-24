@@ -15,9 +15,3 @@ CREATE TABLE IF NOT EXISTS `security` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `hash` (`hash`)
 );
-CREATE TABLE IF NOT EXISTS `sessions` (
-  `id` int NOT NULL,
-  `token_list` json DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  CONSTRAINT `sessions_chk_1` CHECK ((json_valid(`token_list`) and (json_type(`token_list`) = _cp850'ARRAY')))
-);
