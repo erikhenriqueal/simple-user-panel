@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple User Panel</title>
+  <script src="https://unpkg.com/vue@3.3.11/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/axios@1.6.2/dist/axios.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <ul>
+      <li v-if="!logged">
+        <a href="/login.html">Login</a>
+      </li>
+      <li v-if="!logged">
+        <a href="/register.html">Register</a>
+      </li>
+      <li v-if="logged">
+        <a href="/panel.html">Dashboard</a>
+      </li>
+      <li v-if="logged">
+        <button @click="exitAccount">Exit account</button>
+      </li>
+    </ul>
+  </div>
+  <script>
+    Vue.createApp({
+      data: () => ({
+        logged: /[.;]?logged=t[;.]?/g.test(document.cookie)
+      }),
+      methods: {
+        exitAccount() {
+          axios.post('http://localhost:8080/api/auth/exit')
+          .then(response => {
+            window.location.href = response.data.redirect
+          })
+          .catch(error => {
+            console.error('Could not exit:', error)
+          })
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>

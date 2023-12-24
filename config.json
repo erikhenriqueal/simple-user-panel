@@ -1,0 +1,6 @@
+{
+  "user_id_regexp": "^\\d+$",
+  "user_username_regexp": "^[\\w\\d]{4,32}$",
+  "user_email_regexp": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+  "user_hash_regexp": "^\\$2b\\$10\\$[A-z0-9\\.\\/]{53}$"
+}

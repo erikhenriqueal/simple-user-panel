@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple User Panel | Dashboard</title>
+  <script src="https://unpkg.com/vue@3.3.11/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/axios@1.6.2/dist/axios.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <h1>Dashboard</h1>
+    <span>Hello, {{ accountData && accountData['username'] ? accountData['username'] : 'User' }}</span>
+    <form name="update-account" @submit.prevent="updateAccount">
+      <label for="username">
+        <span>Username:</span><br>
+        <input id="username" name="username" type="text" placeholder="New username..." v-model="formUsername" @input="checkFormUsername">
+        <span v-if="usernameError!== null">&nbsp; {{ usernameError}}</span>
+      </label>
+      <br>
+      <label for="email">
+        <span>E-mail:</span><br>
+        <input id="email" name="email" type="email" placeholder="New E-mail..." v-model="formEmail" @input="checkFormEmail">
+        <span v-if="emailError !== null">&nbsp; {{ emailError }}</span>
+      </label>
+      <br>
+      <label for="new-password">
+        <span>New password:</span><br>
+        <input id="new-password" name="new-password" type="password" placeholder="New password..." v-model="formNewPassword" @input="checkFormPasswords">
+        <span v-if="newPasswordError !== null">&nbsp; {{ newPasswordError }}</span>
+      </label>
+      <br>
+      <label for="old-password">
+        <span>Actual password:</span><br>
+        <input id="old-password" name="old-password" type="password" placeholder="Actual password..." v-model="formOldPassword" @input="checkFormPasswords" :required="typeof formNewPassword === 'string' && formNewPassword.length > 0">
+        <span v-if="oldPasswordError !== null">&nbsp; {{ oldPasswordError }}</span>
+      </label>
+      <br>
+      <button type="submit">Save</button>
+      <span v-if="updateError !== null">&nbsp; {{ updateError }}</span>
+    </form>
+    <br>
+    <button @click="exitAccount" id="exit">Exit account</button>
+    <button @click="deleteAccount" id="delete">Delete account</button>
+    <a href="http://localhost:8080/">Back to Home</a>
+  </div>
+  <script type="module">
+    Vue.createApp({
+      setup() {
+        const accountData = Vue.ref(null)
+        const getAccountData = async () => {
+          try {
+            const response = await axios.get('http://localhost:8080/api/users')
+            if (response.status === 200) {
+              accountData.value = response.data
+              return
+            }
+          } catch (e) {
+            console.error('Failed to fectch user data:', e)
+          }
+          accountData.value = { id: null, username: 'Username', email: null }
+        }
+
+        Vue.onMounted(getAccountData)
+
+        return { accountData }
+      },
+      data: () => ({
+        formUsername: '',
+        formEmail: '',
+        formNewPassword: '',
+        formOldPassword: '',
+        usernameError: null,
+        emailError: null,
+        newPasswordError: null,
+        oldPasswordError: null,
+        updateError: null
+      }),
+      methods: {
+        checkFormUsername() {
+          if (typeof this.formUsername === 'string' && this.formUsername.length === 0) return this.usernameError = null
+          const validUsername = window.checkUsername(this.formUsername)
+          if (!validUsername.valid) {
+            if (validUsername.error === 'INVALID_USER_NAME_MIN_LENGTH') this.usernameError = 'Short Username'
+            else if (validUsername.error === 'INVALID_USER_NAME_MAX_LENGTH') this.usernameError = 'TOO LONG Username'
+            else if (validUsername.error === 'INVALID_USER_NAME_CHARACTERS') this.usernameError = 'Invalid Characters'
+            else this.usernameError = 'Invalid Username'
+          } else this.usernameError = null
+        },
+        checkFormEmail() {
+          if (typeof this.formEmail === 'string' && this.formEmail.length === 0) return this.emailError = null
+          const validEmail = window.checkEmail(this.formEmail)
+          if (!validEmail.valid) this.emailError = 'Invalid E-Mail Format'
+          else this.emailError = null
+        },
+        checkFormPasswords() {
+          if (typeof this.formNewPassword === 'string' && this.formNewPassword.length === 0) {
+            this.newPasswordError = null
+            this.oldPasswordError = null
+            return
+          }
+
+          this.newPasswordError = this.validatePassword(this.formNewPassword)
+          this.oldPasswordError = this.validatePassword(this.formOldPassword)
+        },
+        updateAccount() {
+          this.checkFormUsername()
+          this.checkFormEmail()
+          this.checkFormPasswords()
+
+          if (this.usernameError !== null || this.emailError !== null || this.newPasswordError !== null || this.oldPasswordError !== null) return
+
+          const data = {
+            username: this.formUsername,
+            email: this.formEmail,
+            password: this.formOldPassword,
+            'new-password': this.formNewPassword
+          }
+
+          axios.put('http://localhost:8080/api/users', data)
+          .then(response => {
+            this.updateError = null
+            this.accountData = response.data
+          })
+          .catch(({ response: { data } }) => {
+            console.error('Update error:', data)
+            const error = data?.error?.message || data?.error?.code
+            if (error) this.updateError = error
+          })
+        },
+        exitAccount() {
+          axios.post('http://localhost:8080/api/auth/exit')
+          .then(response => {
+            const redirect = response?.data?.redirect
+            if (window.checkURL(redirect)) window.location.href = redirect
+          })
+          .catch(error => {
+            console.error('Could not exit:', error)
+          })
+        },
+        deleteAccount() {
+          axios.delete('http://localhost:8080/api/users')
+          .then(console.log)
+          .catch(error => {
+            console.error('Failed to delete account:', error)
+          })
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>

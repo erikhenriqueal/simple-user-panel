@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple User Panel | Login into your account</title>
+  <script src="https://unpkg.com/vue@3.3.11/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/axios@1.6.2/dist/axios.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <h1>Login</h1>
+    <form @submit.prevent="submitLogin">
+      <div class="user-uuid">
+        <label for="user-uuid-input">
+          Username or E-mail:
+          <input id="user-uuid-input" name="uuid" required type="text" v-model="formUUID" @change="checkFormUUID">
+          <span v-if="UUIDError !== null">&nbsp; {{ UUIDError }}</span>
+        </label>
+      </div>
+      <div class="user-password">
+        <label for="user-password-input">
+          Password:
+          <input id="user-password-input" name="password" required type="password" v-model="formPassword" @change="checkFormPassword">
+          <span v-if="passwordError !== null">&nbsp; {{ passwordError }}</span>
+        </label>
+      </div>
+      <div class="user-login">
+        <button
+          type="submit"
+          :disabled="
+            formEmail.length === 0 ||
+            formPassword.length == 0 ||
+            emailError !== null ||
+            passwordError !== null
+          "
+        >Login</button>
+      </div>
+    </form>
+    <div v-if="loginError !== null" class="login-error">
+      <span>{{ loginError }}</span>
+    </div>
+    <a href="http://localhost:8080/">Back to Home</a>
+  </div>
+  <script>
+    Vue.createApp({
+      data: () => ({
+        formUUID: '',
+        formPassword: '',
+        UUIDError: null,
+        passwordError: null,
+        loginError: null
+      }),
+      methods: {
+        checkFormUUID() {
+          axios.get('http://localhost:8080/api/check/uuid', { uuid: this.formUUID })
+          .then(response => {
+            console.log(response)
+          })
+          .catch(error => {
+            console.log(error)
+          })
+        },
+        checkFormPassword() {
+          axios.get('http://localhost:8080/api/check/password', { password: this.formPassword })
+          .then(response => {
+            console.log(response)
+          })
+          .catch(error => {
+            console.log(error)
+          })
+        },
+        submitLogin() {
+          this.checkFormEmail()
+          this.checkFormPassword()
+          if (this.emailError !== null || this.passwordError !== null) return
+
+          const data = {
+            email: this.formEmail,
+            password: this.formPassword
+          }
+
+          return axios.post('http://localhost:8080/api/auth/login', data)
+          .then(response => {
+            console.log(response)
+          })
+          .catch(error => {
+            console.error('Failed to login', error)
+          })
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
