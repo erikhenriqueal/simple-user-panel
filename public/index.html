@@ -9,6 +9,7 @@
 </head>
 <body>
   <div id="app">
+    <span v-if="logged">Hello, {{ accountData?.username || 'User' }}</span>
     <ul>
       <li v-if="!logged">
         <a href="/login.html">Login</a>
@@ -26,6 +27,24 @@
   </div>
   <script>
     Vue.createApp({
+      setup() {
+        if (!/[.;]?logged=t[;.]?/g.test(document.cookie)) return;
+
+        const accountData = Vue.ref(null)
+        const getAccountData = async () => {
+          try {
+            const response = await axios.get('http://localhost:8080/api/users')
+            if (response.status === 200) accountData.value = response.data
+          } catch (e) {
+            accountData.value = { id: null, username: 'User', email: null }
+            console.error('Failed to fectch user data:', e)
+          }
+        }
+
+        Vue.onMounted(getAccountData)
+
+        return { accountData }
+      },
       data: () => ({
         logged: /[.;]?logged=t[;.]?/g.test(document.cookie)
       }),

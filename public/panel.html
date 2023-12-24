@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simple User Panel | Dashboard</title>
+  <script src="./checkURL.js"></script>
   <script src="https://unpkg.com/vue@3.3.11/dist/vue.global.prod.js"></script>
   <script src="https://unpkg.com/axios@1.6.2/dist/axios.min.js"></script>
 </head>
@@ -11,37 +12,39 @@
   <div id="app">
     <h1>Dashboard</h1>
     <span>Hello, {{ accountData && accountData['username'] ? accountData['username'] : 'User' }}</span>
-    <form name="update-account" @submit.prevent="updateAccount">
-      <label for="username">
-        <span>Username:</span><br>
-        <input id="username" name="username" type="text" placeholder="New username..." v-model="formUsername" @change="checkFormUsername">
-        <span v-if="usernameError!== null">&nbsp; {{ usernameError}}</span>
-      </label>
-      <br>
-      <label for="email">
-        <span>E-mail:</span><br>
-        <input id="email" name="email" type="email" placeholder="New E-mail..." v-model="formEmail" @change="checkFormEmail">
-        <span v-if="emailError !== null">&nbsp; {{ emailError }}</span>
-      </label>
-      <br>
-      <label for="new-password">
-        <span>New password:</span><br>
-        <input id="new-password" name="new-password" type="password" placeholder="New password..." v-model="formNewPassword" @change="checkFormNewPassword">
-        <span v-if="newPasswordError !== null">&nbsp; {{ newPasswordError }}</span>
-      </label>
-      <br>
-      <label for="old-password">
-        <span>Actual password:</span><br>
-        <input id="old-password" name="old-password" type="password" placeholder="Actual password..." v-model="formOldPassword" @change="checkFormOldPassword" :required="typeof formNewPassword === 'string' && formNewPassword.length > 0">
-        <span v-if="oldPasswordError !== null">&nbsp; {{ oldPasswordError }}</span>
-      </label>
-      <br>
-      <button type="submit">Save</button>
-      <span v-if="updateError !== null">&nbsp; {{ updateError }}</span>
-    </form>
-    <br>
-    <button @click="exitAccount" id="exit">Exit account</button>
-    <button @click="deleteAccount" id="delete">Delete account</button>
+    <div id="update-account">
+      <div id="update-user" style="display: inline-block; vertical-align: top;">
+        <label for="username">
+          <span>Username:</span><br>
+          <input id="username" name="username" type="text" placeholder="New username..." v-model="formUsername" @change="updateUsername">
+          <span v-if="usernameError!== null">&nbsp; {{ usernameError}}</span>
+        </label>
+        <br>
+        <label for="email">
+          <span>E-mail:</span><br>
+          <input id="email" name="email" type="email" placeholder="New E-mail..." v-model="formEmail" @change="updateEmail">
+          <span v-if="emailError !== null">&nbsp; {{ emailError }}</span>
+        </label>
+      </div>
+      <form name="update-password"  style="display: inline-block; vertical-align: top;" @submit.prevent="updatePassword">
+        <label for="new-password">
+          <span>New password:</span><br>
+          <input id="new-password" name="new-password" type="password" placeholder="New password..." v-model="formNewPassword" @change="checkFormNewPassword">
+          <span v-if="newPasswordError !== null">&nbsp; {{ newPasswordError }}</span>
+        </label>
+        <br>
+        <label for="old-password">
+          <span>Actual password:</span><br>
+          <input id="old-password" name="old-password" type="password" placeholder="Actual password..." v-model="formOldPassword" @change="checkFormOldPassword" :required="typeof formNewPassword === 'string' && formNewPassword.length > 0">
+          <span v-if="oldPasswordError !== null">&nbsp; {{ oldPasswordError }}</span>
+        </label>
+        <br>
+        <button type="submit" :disabled="formNewPassword?.length === 0 || newPasswordError !== null || oldPasswordError !== null">Save Password</button>
+        <span v-if="updatePasswordError !== null">&nbsp; {{ updatePasswordError }}</span>
+      </form>
+    </div>
+    <button id="exit-account-btn" @click="exitAccount">Exit account</button>
+    <button id="delete-account-btn" @click="deleteAccount">Delete account</button>
     <a href="http://localhost:8080/">Back to Home</a>
   </div>
   <script type="module">
@@ -51,14 +54,11 @@
         const getAccountData = async () => {
           try {
             const response = await axios.get('http://localhost:8080/api/users')
-            if (response.status === 200) {
-              accountData.value = response.data
-              return
-            }
+            if (response.status === 200) accountData.value = response.data
           } catch (e) {
+            accountData.value = { id: null, username: 'User', email: null }
             console.error('Failed to fectch user data:', e)
           }
-          accountData.value = { id: null, username: 'Username', email: null }
         }
 
         Vue.onMounted(getAccountData)
@@ -74,78 +74,115 @@
         emailError: null,
         newPasswordError: null,
         oldPasswordError: null,
-        updateError: null
+        updatePasswordError: null
       }),
       methods: {
         checkFormUsername() {
-          axios.get('http://localhost:8080/api/check/username', { username: this.formUsername })
-          .then(response => {
-            console.log(response)
-          })
-          .catch(error => {
-            console.log(error)
-          })
+          return axios.post('http://localhost:8080/api/check/username', { username: this.formUsername })
+          .then(() => { this.usernameError = null })
+          .catch(({ response: { data: { error: usernameError }}}) => { this.usernameError = usernameError.message })
         },
         checkFormEmail() {
-          axios.get('http://localhost:8080/api/check/email', { email: this.formEmail })
-          .then(response => {
-            console.log(response)
-          })
-          .catch(error => {
-            console.log(error)
-          })
+          return axios.post('http://localhost:8080/api/check/email', { email: this.formEmail })
+          .then(() => { this.emailError = null })
+          .catch(({ response: { data: { error: emailError }}}) => { this.emailError = emailError.message })
         },
         checkFormNewPassword() {
-          this.validatePassword(formNewPassword)
-        },
-        checkFormOldPasswor() {
-          this.validatePassword(formOldPassword)
-        },
-        validatePassword(password) {
-          return axios.get('http://localhost:8080/api/check/password', { password })
-          .then(console.log)
-          .catch(console.error)
-        },
-        updateAccount() {
-          this.checkFormUsername()
-          this.checkFormEmail()
-          this.checkFormPasswords()
-
-          if (this.usernameError !== null || this.emailError !== null || this.newPasswordError !== null || this.oldPasswordError !== null) return
-
-          const data = {
-            username: this.formUsername,
-            email: this.formEmail,
-            password: this.formOldPassword,
-            'new-password': this.formNewPassword
+          if (this.formNewPassword?.length === 0) {
+            this.oldPasswordError = null
+            this.newPasswordError = null
+            return
           }
+          return axios.get('http://localhost:8080/api/check/password', { password })
+          .then(() => { this.oldPasswordError = null })
+          .catch(({ response: { data: { error: passwordError } } }) => { this.newPasswordError = passwordError?.message || passwordError?.code || 'Unknown Error' })
+        },
+        checkFormOldPassword() {
+          if (this.formNewPassword?.length === 0) {
+            this.oldPasswordError = null
+            this.newPasswordError = null
+            return
+          }
+          return axios.get('http://localhost:8080/api/check/password', { password })
+          .then(() => { this.oldPasswordError = null })
+          .catch(({ response: { data: { error: passwordError } } }) => { this.oldPasswordError = passwordError?.message || passwordError?.code || 'Unknown Error' })
+        },
+        updateUsername() {
+          if (this.formUsername?.length === 0) return
+          if (this.formUsername === this.accountData?.username) return
+          (async () => {
+            await this.checkFormUsername()
+            if (this.usernameError !== null) return
 
-          axios.put('http://localhost:8080/api/users', data)
-          .then(response => {
-            this.updateError = null
-            this.accountData = response.data
-          })
-          .catch(({ response: { data } }) => {
-            console.error('Update error:', data)
-            const error = data?.error?.message || data?.error?.code
-            if (error) this.updateError = error
-          })
+            axios.put('http://localhost:8080/api/users/username', { username: this.formUsername })
+            .then(() => {
+              this.usernameError = null
+              if (this.accountData?.username) this.accountData.username = this.formUsername
+            })
+            .catch(({ response: { data } }) => {
+              console.error('Update Username error:', data)
+              const error = data?.error?.message || data?.error?.code || data?.error || 'Unknown Error'
+              this.usernameError = error
+            })
+          })()
+        },
+        updateEmail() {
+          if (this.formEmail?.length === 0) return
+          if (this.formEmail === this.accountData?.email) return
+          (async () => {
+            await this.checkFormEmail()
+            if (this.emailError !== null) return
+
+            axios.put('http://localhost:8080/api/users/email', { email: this.formEmail })
+            .then(() => {
+              this.emailError = null
+              if (this.accountData?.email) this.accountData.email = this.formEmail
+            })
+            .catch(({ response: { data } }) => {
+              console.error('Update Email error:', data)
+              const error = data?.error?.message || data?.error?.code || data?.error || 'Unknown Error'
+              this.emailError = error
+            })
+          })()
+        },
+        updatePassword() {
+          (async () => {
+            await this.checkFormNewPassword()
+            await this.checkFormOldPassword()
+            if (this.newPasswordError !== null || this.oldPasswordError !== null) return
+
+            const data = {
+              password: this.formOldPassword,
+              'new-password': this.formNewPassword
+            }
+
+            axios.put('http://localhost:8080/api/users/password', data)
+            .then(() => window.location.reload())
+            .catch(({ response: { data } }) => {
+              console.error('Update Password error:', data)
+              const error = data?.error?.message || data?.error?.code || data?.error || 'Unknown Error'
+              if (error) this.updatePasswordError = error
+            })
+          })()
         },
         exitAccount() {
           axios.post('http://localhost:8080/api/auth/exit')
-          .then(response => {
-            const redirect = response?.data?.redirect
-            if (window.checkURL(redirect)) window.location.href = redirect
+          .then(({ data }) => {
+            if (data?.redirect && checkURL(data.redirect)) window.location.href = data.redirect
+            else window.location.reload()
           })
           .catch(error => {
-            console.error('Could not exit:', error)
+            console.error('Could not exit')
           })
         },
         deleteAccount() {
           axios.delete('http://localhost:8080/api/users')
-          .then(console.log)
+          .then(({ data }) => {
+            if (data?.redirect && checkURL(data.redirect)) window.location.href = data.redirect
+            else window.location.reload()
+          })
           .catch(error => {
-            console.error('Failed to delete account:', error)
+            console.error('Failed to delete your account')
           })
         }
       }

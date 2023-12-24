@@ -50,8 +50,8 @@ router.put('/username', async (req, res) => {
   const userID = getUserID(req.cookies['session_token'])
   const userData = await db.getUser(userID)
 
-  if (username === userData.username) return res.status(409).json({ error: { code: 'SAME_USER_NAME' } })
-  if (await db.hasUsername(username)) return res.status(409).json({ error: { code: 'EXISTING_USER_NAME' } })
+  if (username === userData.username) return res.status(409).json({ error: { code: 'SAME_USER_NAME', message: 'This is your current username' } })
+  if (await db.hasUsername(username)) return res.status(409).json({ error: { code: 'EXISTING_USER_NAME', message: 'Username is already used' } })
 
   await db.changeUser(userID, { username })
   res.sendStatus(200)
@@ -67,8 +67,8 @@ router.put('/email', async (req, res) => {
   const userID = getUserID(req.cookies['session_token'])
   const userData = await db.getUser(userID)
 
-  if (email === userData.email) return res.status(409).json({ error: { code: 'SAME_USER_EMAIL' } })
-  if (await db.hasEmail(email)) return res.status(409).json({ error: { code: 'EXISTING_USER_EMAIL' } })
+  if (email === userData.email) return res.status(409).json({ error: { code: 'SAME_USER_EMAIL', message: 'This is your current E-mail' } })
+  if (await db.hasEmail(email)) return res.status(409).json({ error: { code: 'EXISTING_USER_EMAIL', message: 'E-mail is already used' } })
 
   await db.changeUser(userID, { email })
   res.sendStatus(200)
@@ -106,7 +106,7 @@ router.delete('/', async (req, res) => {
 
   res.clearCookie('session_token', { httpOnly: true })
      .clearCookie('logged')
-     .redirect('/')
+     .json({ redirect: 'http://localhost:8080' })
 })
 
 

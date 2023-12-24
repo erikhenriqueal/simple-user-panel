@@ -5,7 +5,7 @@
 */
 
 import { existsSync } from 'fs'
-if (!existsSync('./config.json')) throw new Error('Missing \'config.json\' file')
+if (!existsSync('config.json')) throw new Error('Missing \'config.json\' file')
 
 import config from './config.json' assert { type: 'json' }
 if (typeof config !== 'object' || Array.isArray(config)) throw new Error('\'config.json\' isn\'t a valid object')
@@ -39,7 +39,7 @@ import jwt from 'jsonwebtoken'
 export function parseUserID(id) {
   const response = [null, { status: 200, error: null }]
   if (typeof id === 'string') {
-    if (id.length.trim() === 0) {
+    if (id.trim().length === 0) {
       response[1].status = 400
       response[1].error = { code: 'INVALID_USER_ID_LENGTH', message: 'User id String is null' }
     } else if (!USER_ID_REGEXP.test(id)) {

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simple User Panel | Login into your account</title>
+  <script src="./checkURL.js"></script>
   <script src="https://unpkg.com/vue@3.3.11/dist/vue.global.prod.js"></script>
   <script src="https://unpkg.com/axios@1.6.2/dist/axios.min.js"></script>
 </head>
@@ -29,9 +30,9 @@
         <button
           type="submit"
           :disabled="
-            formEmail.length === 0 ||
+            formUUID.length === 0 ||
             formPassword.length == 0 ||
-            emailError !== null ||
+            UUIDError !== null ||
             passwordError !== null
           "
         >Login</button>
@@ -53,40 +54,37 @@
       }),
       methods: {
         checkFormUUID() {
-          axios.get('http://localhost:8080/api/check/uuid', { uuid: this.formUUID })
-          .then(response => {
-            console.log(response)
-          })
-          .catch(error => {
-            console.log(error)
-          })
+          return axios.post('http://localhost:8080/api/check/uuid', { uuid: this.formUUID })
+          .then(response => { this.UUIDError = null })
+          .catch(({ response: { status, data: { error: UUIDError }}}) => { this.UUIDError = UUIDError.message })
         },
         checkFormPassword() {
-          axios.get('http://localhost:8080/api/check/password', { password: this.formPassword })
-          .then(response => {
-            console.log(response)
-          })
-          .catch(error => {
-            console.log(error)
-          })
+          return axios.post('http://localhost:8080/api/check/password', { password: this.formPassword })
+          .then(() => { this.passwordError = null })
+          .catch(({ response: { status, data: { error: passwordError }}}) => { this.passwordError = passwordError.message })
         },
         submitLogin() {
-          this.checkFormEmail()
-          this.checkFormPassword()
-          if (this.emailError !== null || this.passwordError !== null) return
-
-          const data = {
-            email: this.formEmail,
-            password: this.formPassword
-          }
-
-          return axios.post('http://localhost:8080/api/auth/login', data)
-          .then(response => {
-            console.log(response)
-          })
-          .catch(error => {
-            console.error('Failed to login', error)
-          })
+          (async () => {
+            await this.checkFormUUID()
+            await this.checkFormPassword()
+            if (this.UUIDError !== null || this.passwordError !== null) return
+  
+            const data = {
+              uuid: this.formUUID,
+              password: this.formPassword
+            }
+  
+            axios.post('http://localhost:8080/api/auth/login', data)
+            .then(({ data }) => {
+              if (data?.redirect && checkURL(data.redirect)) window.location.href = data.redirect
+              else window.location.reload()
+            })
+            .catch(({ response: { data } }) => {
+              const error = data?.error?.message || data?.error?.code || data?.error || data
+              console.error('Login error:', error)
+              return null
+            })
+          })()
         }
       }
     }).mount('#app')

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simple User Panel | Account creating</title>
+  <script src="./checkURL.js"></script>
   <script src="https://unpkg.com/vue@3.3.11/dist/vue.global.prod.js"></script>
   <script src="https://unpkg.com/axios@1.6.2/dist/axios.min.js"></script>
 </head>
@@ -15,7 +16,7 @@
       <div class="user-username">
         <label for="user-username-input">
           Username:
-          <input id="username-input" name="username" type="username" v-model="formUsername" @change="checkFormUsername" required>
+          <input id="username-input" name="username" type="text" v-model="formUsername" @change="checkFormUsername" required>
           <span v-if="usernameError !== null">&nbsp; {{ usernameError }}</span>
         </label>
       </div>
@@ -93,10 +94,12 @@
             }
   
             axios.post('http://localhost:8080/api/auth/register', data)
-            .then(response => {
-              console.log(response)
+            .then(({ data }) => {
+              if (data?.redirect && checkURL(data.redirect)) window.location.href = data.redirect
+              else window.location.reload()
             })
-            .catch(error => {
+            .catch(({ response: { data } }) => {
+              const error = data?.error?.message || data?.error?.code || data?.error || data
               console.error('Register error:', error)
             })
           })()

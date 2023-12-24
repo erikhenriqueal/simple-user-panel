@@ -12,12 +12,13 @@ router.use(cookieParser())
 
 router.post('/login', async (req, res) => {
   const data = {
-    uuid: req.body['uuid']?.trim(),
+    uuid: req.body['uuid'],
     password: req.body['password']
   }
 
   const [ UUID, UUIDRes ] = parseUserUUID(data.uuid)
-  if (UUIDRes.status !== 200) return res.status(UUIDRes.status).json({ error: UUIDRes.error })
+  if (UUIDRes.error !== null) return res.status(UUIDRes.status).json({ error: UUIDRes.error })
+  if (UUIDRes.type === 'id') return res.status(400).json({ error: { code: 'INVALID_UUID_FORMAT', message: 'User Unique ID doesn\'t match any format of unique key' } })
   
   const [ password, passwordRes ] = parseUserPassword(data.password)
   if (passwordRes.status !== 200) return res.status(passwordRes.status).json({ error: passwordRes.error })
@@ -32,13 +33,13 @@ router.post('/login', async (req, res) => {
   res.cookie('session_token', token, { httpOnly: true })
      .cookie('logged', 't')
      .status(200)
-     .redirect('/panel.html')
+     .json({ redirect: 'http://localhost:8080/panel.html' })
 })
 router.post('/register', async (req, res) => {
   const data = {
-    username: req.body['username']?.trim(),
-    email: req.body['email']?.trim(),
-    password: req.body['password']?.trim()
+    username: req.body['username'],
+    email: req.body['email'],
+    password: req.body['password']
   }
 
   const [ username, usernameRes ] = parseUserUsername(data.username)
@@ -63,7 +64,7 @@ router.post('/register', async (req, res) => {
     res.cookie('session_token', token, { httpOnly: true })
        .cookie('logged', 't')
        .status(201)
-       .redirect('/panel.html')
+       .json({ redirect: 'http://localhost:8080/panel.html' })
   } catch (e) {
     console.error(`Failed to register user:\n- Username: ${username}\n- E-mail: ${email}\n- Error: `, e)
     res.status(500).send({ code: 'UNKNOWN', message: 'Failed to register user' })
@@ -73,7 +74,7 @@ router.post('/exit', (req, res) => {
   res.clearCookie('session_token', { httpOnly: true })
      .clearCookie('logged')
      .status(200)
-     .redirect('/')
+     .json({ redirect: 'http://localhost:8080' })
 })
 
 
