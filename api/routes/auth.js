@@ -56,7 +56,7 @@ router.post('/register', async (req, res) => {
   try {
     const { id } = await db.addUser({ username, email })
     const hash = generateHash(password)
-    await db.addUserHash(registeredID, hash)
+    await db.addUserHash(id, hash)
 
     const token = jwt.sign({ 'user-id': id }, hash)
 
@@ -65,7 +65,7 @@ router.post('/register', async (req, res) => {
        .status(201)
        .redirect('/panel.html')
   } catch (e) {
-    console.error(`Failed to register user:\n- Username: ${username}\n- E-mail: ${email}`, e)
+    console.error(`Failed to register user:\n- Username: ${username}\n- E-mail: ${email}\n- Error: `, e)
     res.status(500).send({ code: 'UNKNOWN', message: 'Failed to register user' })
   }
 })

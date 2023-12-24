@@ -43,7 +43,7 @@ export async function getUser(uuid) {
   const [ parsedUUID, { error: UUIDError } ] = parseUserUUID(uuid)
   if (UUIDError !== null) throw new Error(`Failed to parse User's Unique ID: ${UUIDError.code} - ${UUIDError.message}`)
   const connection = await pool.getConnection()
-  const [[ user ]] = await connection.execute('SELECT * FROM `users` WHERE `id`=? OR `username`=? OR `email`=?', parsedUUID)
+  const [[ user ]] = await connection.execute('SELECT * FROM `users` WHERE `id`=:uuid OR `username`=:uuid OR `email`=:uuid', { uuid: parsedUUID })
   connection.release()
   return user || null
 }
@@ -56,7 +56,7 @@ export async function hasUser(uuid) {
   const [ parsedUUID, { error: UUIDError } ] = parseUserUUID(uuid)
   if (UUIDError !== null) throw new Error(`Failed to parse User's Unique ID: ${UUIDError.code} - ${UUIDError.message}`)
   const connection = await pool.getConnection()
-  const [[{ size }]] = await connection.execute('SELECT COUNT(*) AS `size` FROM `users` WHERE `id`=? OR `username`=? OR `email`=?', parsedUUID)
+  const [[{ size }]] = await connection.execute('SELECT COUNT(*) AS `size` FROM `users` WHERE `id`=:uuid OR `username`=:uuid OR `email`=:uuid', { uuid: parsedUUID })
   connection.release()
   return size > 0
 }
@@ -69,7 +69,7 @@ export async function hasUsername(username) {
   const [ parsedUsername, { error: usernameError } ] = parseUserUsername(username)
   if (usernameError !== null) throw new Error(`Failed to parse User's Username: ${usernameError.code} - ${usernameError.message}`)
   const connection = await pool.getConnection()
-  const [[{ size }]] = await connection.execute('SELECT COUNT(*) AS `size` FROM `users` WHERE `username`=?', parsedUsername)
+  const [[{ size }]] = await connection.execute('SELECT COUNT(*) AS `size` FROM `users` WHERE `username`=?', [ parsedUsername ])
   connection.release()
 
   return size > 0
@@ -83,7 +83,7 @@ export async function hasEmail(email) {
   const [ parsedEmail, { error: emailError } ] = parseUserEmail(email)
   if (emailError !== null) throw new Error(`Failed to parse User's E-mail: ${emailError.code} - ${emailError.message}`)
   const connection = await pool.getConnection()
-  const [[{ size }]] = await connection.execute('SELECT COUNT(*) AS `size` FROM `users` WHERE `email`=?', parsedEmail)
+  const [[{ size }]] = await connection.execute('SELECT COUNT(*) AS `size` FROM `users` WHERE `email`=?', [ parsedEmail ])
   connection.release()
 
   return size > 0
@@ -151,7 +151,7 @@ export async function deleteUser(uuid) {
   if (!existing) throw new Error('User isn\'t in database')
 
   const connection = await pool.getConnection()
-  const [{ affectedRows }] = await connection.execute('DELETE FROM `users` WHERE `id`=? OR `username`=? OR `email`=?', parsedUUID)
+  const [{ affectedRows }] = await connection.execute('DELETE FROM `users` WHERE `id`=:uuid OR `username`=:uuid OR `email`=:uuid', { uuid: parsedUUID })
   connection.release()
 
   return affectedRows > 0
@@ -175,7 +175,7 @@ export async function getUserHash(id) {
   if (IDError !== null) throw new Error(`Failed to parse User's ID: ${IDError.code} - ${IDError.message}`)
 
   const connection = await pool.getConnection()
-  const [[ data ]] = await connection.execute('SELECT \`hash\` FROM `security` WHERE `id`=?', parsedID)
+  const [[ data ]] = await connection.execute('SELECT \`hash\` FROM `security` WHERE `id`=?', [ parsedID ])
   connection.release()
   
   return data?.hash || null
@@ -190,7 +190,7 @@ export async function hasUserHash(id) {
   if (IDError !== null) throw new Error(`Failed to parse User's ID: ${IDError.code} - ${IDError.message}`)
 
   const connection = await pool.getConnection()
-  const [[{ size }]] = await connection.execute('SELECT COUNT(*) AS `size` FROM `security` WHERE `id`=?', parsedID)
+  const [[{ size }]] = await connection.execute('SELECT COUNT(*) AS `size` FROM `security` WHERE `id`=?', [ parsedID ])
   connection.release()
 
   return size > 0
@@ -224,7 +224,7 @@ export async function deleteUserHash(id) {
   if (IDError !== null) throw new Error(`Failed to parse User's ID: ${IDError.code} - ${IDError.message}`)
 
   const connection = await pool.getConnection()
-  const [{ affectedRows }] = await connection.execute('DELETE FROM `security` WHERE `id`=?', parsedID)
+  const [{ affectedRows }] = await connection.execute('DELETE FROM `security` WHERE `id`=?', [ parsedID ])
   connection.release()
 
   return affectedRows > 0

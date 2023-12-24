@@ -65,51 +65,41 @@
       }),
       methods: {
         checkFormUsername() {
-          axios.get('http://localhost:8080/api/check/username', { username: this.formUsername })
-          .then(response => {
-            console.log(response)
-          })
-          .catch(error => {
-            console.log(error)
-          })
+          return axios.post('http://localhost:8080/api/check/username', { username: this.formUsername })
+          .then(() => { this.usernameError = null })
+          .catch(({ response: { data: { error: usernameError }}}) => { this.usernameError = usernameError.message })
         },
         checkFormEmail() {
-          axios.get('http://localhost:8080/api/check/email', { email: this.formEmail })
-          .then(response => {
-            console.log(response)
-          })
-          .catch(error => {
-            console.log(error)
-          })
+          return axios.post('http://localhost:8080/api/check/email', { email: this.formEmail })
+          .then(() => { this.emailError = null })
+          .catch(({ response: { data: { error: emailError }}}) => { this.emailError = emailError.message })
         },
         checkFormPassword() {
-          axios.get('http://localhost:8080/api/check/password', { password: this.formPassword })
-          .then(response => {
-            console.log(response)
-          })
-          .catch(error => {
-            console.log(error)
-          })
+          return axios.post('http://localhost:8080/api/check/password', { password: this.formPassword })
+          .then(() => { this.passwordError = null })
+          .catch(({ response: { data: { error: passwordError }}}) => { this.passwordError = passwordError.message })
         },
         submitRegister() {
-          this.checkFormUsername()
-          this.checkFormEmail()
-          this.checkFormPassword()
-          if (this.usernameError !== null || this.emailError !== null || this.passwordError !== null) return
-
-          const data = {
-            username: this.formUsername,
-            email: this.formEmail,
-            password: this.formPassword
-          }
-
-          axios.post('http://localhost:8080/api/auth/register', data)
-          .then(response => {
-            console.log(response)
-          })
-          .catch(error => {
-            console.error('Register error:', error)
-          })
+          (async () => {
+            await this.checkFormUsername()
+            await this.checkFormEmail()
+            await this.checkFormPassword()
+            if (this.usernameError !== null || this.emailError !== null || this.passwordError !== null) return
+  
+            const data = {
+              username: this.formUsername,
+              email: this.formEmail,
+              password: this.formPassword
+            }
+  
+            axios.post('http://localhost:8080/api/auth/register', data)
+            .then(response => {
+              console.log(response)
+            })
+            .catch(error => {
+              console.error('Register error:', error)
+            })
+          })()
         }
       }
     }).mount('#app')

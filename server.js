@@ -8,7 +8,7 @@ _envConfig()
  */
 
 import apiRouter from './api/index.js'
-import { parseToken } from './api/security.js'
+import { validateToken } from './api/security.js'
 
 import cookieParser from 'cookie-parser'
 import express from 'express'
@@ -25,7 +25,7 @@ app.use(async (req, res, next) => {
     return next()
   }
 
-  const { logged } = await parseToken(token)
+  const { logged } = await validateToken(token)
   if (logged) {
     if (req.cookies['logged'] !== 't') res.cookie('logged', 't')
   } else {

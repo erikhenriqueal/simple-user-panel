@@ -1,8 +1,5 @@
-import * as db from '../db.js'
-import { checkUserPassword, generateHash } from '../security.js'
 import { parseUserUUID, parseUserUsername, parseUserEmail, parseUserPassword } from '../../utils.js'
 
-import jwt from 'jsonwebtoken'
 import cookieParser from 'cookie-parser'
 
 import express from 'express'

@@ -14,25 +14,25 @@
     <form name="update-account" @submit.prevent="updateAccount">
       <label for="username">
         <span>Username:</span><br>
-        <input id="username" name="username" type="text" placeholder="New username..." v-model="formUsername" @input="checkFormUsername">
+        <input id="username" name="username" type="text" placeholder="New username..." v-model="formUsername" @change="checkFormUsername">
         <span v-if="usernameError!== null">&nbsp; {{ usernameError}}</span>
       </label>
       <br>
       <label for="email">
         <span>E-mail:</span><br>
-        <input id="email" name="email" type="email" placeholder="New E-mail..." v-model="formEmail" @input="checkFormEmail">
+        <input id="email" name="email" type="email" placeholder="New E-mail..." v-model="formEmail" @change="checkFormEmail">
         <span v-if="emailError !== null">&nbsp; {{ emailError }}</span>
       </label>
       <br>
       <label for="new-password">
         <span>New password:</span><br>
-        <input id="new-password" name="new-password" type="password" placeholder="New password..." v-model="formNewPassword" @input="checkFormPasswords">
+        <input id="new-password" name="new-password" type="password" placeholder="New password..." v-model="formNewPassword" @change="checkFormNewPassword">
         <span v-if="newPasswordError !== null">&nbsp; {{ newPasswordError }}</span>
       </label>
       <br>
       <label for="old-password">
         <span>Actual password:</span><br>
-        <input id="old-password" name="old-password" type="password" placeholder="Actual password..." v-model="formOldPassword" @input="checkFormPasswords" :required="typeof formNewPassword === 'string' && formNewPassword.length > 0">
+        <input id="old-password" name="old-password" type="password" placeholder="Actual password..." v-model="formOldPassword" @change="checkFormOldPassword" :required="typeof formNewPassword === 'string' && formNewPassword.length > 0">
         <span v-if="oldPasswordError !== null">&nbsp; {{ oldPasswordError }}</span>
       </label>
       <br>
@@ -78,30 +78,33 @@
       }),
       methods: {
         checkFormUsername() {
-          if (typeof this.formUsername === 'string' && this.formUsername.length === 0) return this.usernameError = null
-          const validUsername = window.checkUsername(this.formUsername)
-          if (!validUsername.valid) {
-            if (validUsername.error === 'INVALID_USER_NAME_MIN_LENGTH') this.usernameError = 'Short Username'
-            else if (validUsername.error === 'INVALID_USER_NAME_MAX_LENGTH') this.usernameError = 'TOO LONG Username'
-            else if (validUsername.error === 'INVALID_USER_NAME_CHARACTERS') this.usernameError = 'Invalid Characters'
-            else this.usernameError = 'Invalid Username'
-          } else this.usernameError = null
+          axios.get('http://localhost:8080/api/check/username', { username: this.formUsername })
+          .then(response => {
+            console.log(response)
+          })
+          .catch(error => {
+            console.log(error)
+          })
         },
         checkFormEmail() {
-          if (typeof this.formEmail === 'string' && this.formEmail.length === 0) return this.emailError = null
-          const validEmail = window.checkEmail(this.formEmail)
-          if (!validEmail.valid) this.emailError = 'Invalid E-Mail Format'
-          else this.emailError = null
+          axios.get('http://localhost:8080/api/check/email', { email: this.formEmail })
+          .then(response => {
+            console.log(response)
+          })
+          .catch(error => {
+            console.log(error)
+          })
         },
-        checkFormPasswords() {
-          if (typeof this.formNewPassword === 'string' && this.formNewPassword.length === 0) {
-            this.newPasswordError = null
-            this.oldPasswordError = null
-            return
-          }
-
-          this.newPasswordError = this.validatePassword(this.formNewPassword)
-          this.oldPasswordError = this.validatePassword(this.formOldPassword)
+        checkFormNewPassword() {
+          this.validatePassword(formNewPassword)
+        },
+        checkFormOldPasswor() {
+          this.validatePassword(formOldPassword)
+        },
+        validatePassword(password) {
+          return axios.get('http://localhost:8080/api/check/password', { password })
+          .then(console.log)
+          .catch(console.error)
         },
         updateAccount() {
           this.checkFormUsername()
